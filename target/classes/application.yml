@@ -1,0 +1,22 @@
+#spring:
+#  security:
+#    oauth2:
+#      client:
+#        registration:
+#          google:
+#            client-id: 331847993180-11jan4vdimsk4s1kkld623fv8ipn4nhb.apps.googleusercontent.com
+#            client-secret: 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
+#  datasource:
+#    username: postgres
+#    password: DivineMercy123
+#    url: jdbc:postgresql://localhost:5433/pfBlogPostDB
+#  jpa:
+#    hibernate:
+#      ddl-auto: update
+#
+#server:
+#  port: 8083
+#sha512:
+#  string: 5627dcc7bb45a7cf9ddd211168fb727a2005338c5fe1e29faa71fc542bcd59e1bf0c604d65578ba9001984bfa0f25e29a509f130db33c51916bf0ebfbb78b645
+#CLIENT:
+#  ID: 331847993180-11jan4vdimsk4s1kkld623fv8ipn4nhb.apps.googleusercontent.com
