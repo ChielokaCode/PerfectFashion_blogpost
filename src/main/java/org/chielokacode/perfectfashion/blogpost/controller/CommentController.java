@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @SecurityRequirement(name = "Bearer Authentication")
 @RestController
 @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
-@RequestMapping("/api/post/{postId}")
+@RequestMapping("/api/post-comment/{postId}")
 public class CommentController {
 
     private CommentServiceImpl commentService;

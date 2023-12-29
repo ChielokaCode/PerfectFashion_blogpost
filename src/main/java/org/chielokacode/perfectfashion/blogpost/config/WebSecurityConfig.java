@@ -55,9 +55,19 @@ public class WebSecurityConfig {
 
                 .authorizeHttpRequests(httpRequest ->
                         httpRequest
-                                .requestMatchers("/api/post/**","/api/sign-up", "/api/admin/sign-up", "/api/login", "/api/admin/login",
-                                        "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/v3/api-docs.yaml").permitAll()
-                                .requestMatchers("/api/logout","/api/dashboard").authenticated()
+                                .requestMatchers("api/post/like-post/**", "api/post/unlike-post/**" ).hasRole("USER")
+
+                                .requestMatchers("api/post/search-post/**" , "api/logout", "/api/post-comment/**", "/api/dashboard").hasAnyRole("ADMIN", "USER")
+
+                                .requestMatchers(
+                                "/api/post/create-post",
+                                        "api/post/all-post",
+                                        "api/post/delete-post/**",
+                                        "api/post/edit-post/**","api/post/get-likes/**").hasRole("ADMIN")
+
+                                .requestMatchers("/api/admin/sign-up",
+                                        "/api/admin/login","/api/sign-up", "/api/login","/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/v3/api-docs.yaml").permitAll()
+                        //.requestMatchers("/api/logout","/api/dashboard", "/api/post/**").authenticated()
                 )
                 .sessionManagement(sessionManagement ->
                         sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
