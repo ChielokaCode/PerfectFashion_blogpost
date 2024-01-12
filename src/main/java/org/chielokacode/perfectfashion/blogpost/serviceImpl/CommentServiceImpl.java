@@ -2,8 +2,11 @@ package org.chielokacode.perfectfashion.blogpost.serviceImpl;
 
 import org.chielokacode.perfectfashion.blogpost.config.payload.ApiResponse;
 import org.chielokacode.perfectfashion.blogpost.config.payload.PagedResponse;
+import org.chielokacode.perfectfashion.blogpost.dto.CommentLikesDto;
 import org.chielokacode.perfectfashion.blogpost.enums.Role;
 import org.chielokacode.perfectfashion.blogpost.exception.BlogApiException;
+import org.chielokacode.perfectfashion.blogpost.exception.CommentNotFoundException;
+import org.chielokacode.perfectfashion.blogpost.exception.PostNotFoundException;
 import org.chielokacode.perfectfashion.blogpost.exception.ResourceNotFoundException;
 import org.chielokacode.perfectfashion.blogpost.model.Comment;
 import org.chielokacode.perfectfashion.blogpost.model.Post;
@@ -71,17 +74,17 @@ public class CommentServiceImpl {
 
 
     //Method to edit Comment by the user that posted the comment or by the admin
-    public Comment editComment(Long commentId, Long postId, User currentUser, Comment newComment) {
+    public Comment editComment(Long commentId, User currentUser, Comment newComment) {
 
         //check that post and comment is present
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new ResourceNotFoundException(POST_STR, ID_STR, postId));
+//        Post post = postRepository.findById(postId)
+//                .orElseThrow(() -> new ResourceNotFoundException(POST_STR, ID_STR, postId));
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new ResourceNotFoundException(COMMENT_STR, ID_STR, commentId));
 
-        if (!comment.getPost().getId().equals(post.getId())) {
-            throw new BlogApiException(HttpStatus.BAD_REQUEST, COMMENT_DOES_NOT_BELONG_TO_POST);
-        }
+//        if (!comment.getPost().getId().equals(post.getId())) {
+//            throw new BlogApiException(HttpStatus.BAD_REQUEST, COMMENT_DOES_NOT_BELONG_TO_POST);
+//        }
 
         /*
          the code checks whether the current user has the authority to update a comment
@@ -178,24 +181,96 @@ public class CommentServiceImpl {
     }
 
 
-    public PagedResponse<Comment> searchCommentByContent(String content, Long postId, int page, int size) {
+    public PagedResponse<Comment> searchCommentByContent(String content, int page, int size) {
         AppUtils.validatePageNumberAndSize(page, size);
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new ResourceNotFoundException(POST_STR, ID_STR, postId));
+//        Post post = postRepository.findById(postId)
+//                .orElseThrow(() -> new ResourceNotFoundException(POST_STR, ID_STR, postId));
 
-
-        //get Comment with content from database with page number of 10 on each page, and sorted in descending order
         Pageable pageable = PageRequest.of(page, size);
 
-        //get all comment with content with default size of 10 on each page
-        Page<Comment> comment = commentRepository.findContentByPostIdIgnoreCaseContains(content, pageable);
+        Page<Comment> comment = commentRepository.findByContentIgnoreCaseStartsWith(content, pageable);
 
-        //if number of comment is empty return empty List else getContent
         List<Comment> searchedComments = comment.getNumberOfElements() == 0 ? Collections.emptyList() : comment.getContent();
 
-        post.setComments(searchedComments);
 
         return new PagedResponse<>(searchedComments, comment.getNumber(), comment.getSize(), comment.getTotalElements(),
                 comment.getTotalPages(), comment.isLast());
+    }
+
+/*
+ public PagedResponse<Post> searchPostByTitle(String title, int page, int size) {
+        //validate that page and size is not less than 0
+        AppUtils.validatePageNumberAndSize(page, size);
+
+        //get Post with title from database with page number of 10 on each page, and sorted in descending order
+        Pageable pageable = PageRequest.of(page, size);
+
+        //get all post with title with default size of 10 on each page
+        Page<Post> posts = postRepository.findByTitleIgnoreCaseStartsWith(title, pageable);
+
+        //if number of post is empty return empty List else getContent
+        List<Post> content = posts.getNumberOfElements() == 0 ? Collections.emptyList() : posts.getContent();
+
+        return new PagedResponse<>(content, posts.getNumber(), posts.getSize(), posts.getTotalElements(),
+                posts.getTotalPages(), posts.isLast());
+    }
+ */
+
+    /////////like and unLike//////////////
+     /*
+    This version utilizes a Set<User> for the likedBy field,
+    and the likePost method now checks for existing likes using the contains method
+    on the likedBy set. This approach ensures that each user can only like a post once.
+     */
+    public void likeComment(Long commentId, User user) throws CommentNotFoundException {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(CommentNotFoundException::new);
+        boolean liked = false;
+        for (User user1 : comment.getLikedBy()) {
+            if (user1.getUsername().equals(user.getUsername())) {
+                liked = true;
+                break;
+            }
+        }
+        if (!liked) {
+            comment.getLikedBy().add(user);
+            comment.setLikes(comment.getLikes() + 1);
+        }
+        commentRepository.saveAndFlush(comment);
+    }
+
+
+
+    /*
+    This unlikePost method complements the likePost method,
+     allowing users to toggle their like status for a post.
+     It checks if the user has already liked the post, and if so, it removes the like.
+     */
+    public void unlikeComment(Long commentId, User user) throws CommentNotFoundException {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(CommentNotFoundException::new);
+        for (User user1 : comment.getLikedBy()) {
+            if (user1.getUsername().equals(user.getUsername())) {
+                comment.getLikedBy().remove(user1);
+                comment.setLikes(comment.getLikes() - 1);
+                break;
+            }
+        }
+        commentRepository.saveAndFlush(comment);
+    }
+
+    public CommentLikesDto getLikes(Long commentId, User user) throws CommentNotFoundException {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(CommentNotFoundException::new);
+        CommentLikesDto commentLikesDto = CommentLikesDto
+                .builder()
+                .likes(comment.getLikes()).build();
+        commentLikesDto.setLiked(false);
+        for (User user1 : comment.getLikedBy()) {
+            if (user1.getUsername().equals(user.getUsername())) {
+                commentLikesDto.setLiked(true);
+            }
+        }
+        return commentLikesDto;
     }
 }

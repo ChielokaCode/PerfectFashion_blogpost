@@ -3,12 +3,12 @@ package org.chielokacode.perfectfashion.blogpost.controller;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.apache.coyote.BadRequestException;
-import org.chielokacode.perfectfashion.blogpost.config.CurrentUser;
 import org.chielokacode.perfectfashion.blogpost.config.payload.ApiResponse;
 import org.chielokacode.perfectfashion.blogpost.config.payload.PagedResponse;
 import org.chielokacode.perfectfashion.blogpost.config.payload.PostRequest;
 import org.chielokacode.perfectfashion.blogpost.config.payload.PostResponse;
 import org.chielokacode.perfectfashion.blogpost.dto.PostLikesDto;
+import org.chielokacode.perfectfashion.blogpost.exception.PostNotFoundException;
 import org.chielokacode.perfectfashion.blogpost.model.Post;
 import org.chielokacode.perfectfashion.blogpost.model.User;
 import org.chielokacode.perfectfashion.blogpost.serviceImpl.PostServiceImpl;
@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/post")
 public class PostController {
 
-    private PostServiceImpl postService;
+    private final PostServiceImpl postService;
 
     @Autowired
     public PostController(PostServiceImpl postService) {
@@ -91,7 +91,7 @@ public class PostController {
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/like-post/{postId}")
     public ResponseEntity<String> likePost(@PathVariable(name = "postId") Long postId,
-                                           @AuthenticationPrincipal User currentUser){
+                                           @AuthenticationPrincipal User currentUser) throws PostNotFoundException {
         postService.likePost(postId, currentUser);
         return new ResponseEntity<>("You Liked Post", HttpStatus.OK);
     }
@@ -99,14 +99,14 @@ public class PostController {
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/unlike-post/{postId}")
     public ResponseEntity<String> unLikePost(@PathVariable(name = "postId") Long postId,
-                                             @AuthenticationPrincipal User currentUser){
-        postService.unLikePost(postId, currentUser);
+                                             @AuthenticationPrincipal User currentUser) throws PostNotFoundException {
+        postService.unlikePost(postId, currentUser);
         return new ResponseEntity<>("You Unliked Post", HttpStatus.OK);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/get-likes/{postId}")
-    public ResponseEntity<PostLikesDto> getLikes(@PathVariable(name = "postId") Long postId, @AuthenticationPrincipal User currentUser){
+    public ResponseEntity<PostLikesDto> getLikes(@PathVariable(name = "postId") Long postId, @AuthenticationPrincipal User currentUser) throws PostNotFoundException {
         PostLikesDto response = postService.getLikes(postId, currentUser);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }

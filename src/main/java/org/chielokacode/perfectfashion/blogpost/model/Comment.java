@@ -13,7 +13,9 @@ import org.hibernate.annotations.OnDeleteAction;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -38,7 +40,12 @@ public class Comment {
 //    @Email
 //    @Size(min = 4, max = 50)
 //    private String email;
+    @JsonIgnore
+    private Integer likes = 0;
 
+    @ManyToMany
+    @JsonIgnore
+    private List<User> likedBy = new ArrayList<>();
 
             @Column(name = "content")
             @Size(min = 10, message = "Comment body must be minimum 10 characters")

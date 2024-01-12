@@ -18,4 +18,6 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 //    Page<Comment> findByContentIgnoreCaseContaining(String content, Pageable pageable);
 
     Page<Comment> findContentByPostIdIgnoreCaseContains(String content, Pageable pageable);
+
+    Page<Comment> findByContentIgnoreCaseStartsWith(String content, Pageable pageable);
 }

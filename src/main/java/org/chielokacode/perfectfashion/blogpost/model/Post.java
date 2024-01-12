@@ -23,7 +23,7 @@ public class Post {
     private Long id;
 
     @NotBlank
-    @Column(name = "title", unique = true)
+    @Column(name = "title")
     private String title;
 
     @NotBlank
@@ -44,14 +44,11 @@ public class Post {
     The ManyToMany annotation with a join table (post_likes)
      is used to model the many-to-many relationship between posts and users who liked them.
      */
+    //@ManyToMany creates a new table in the database matching the post_id and the user_id that liked the post
+    //so the database table name will be "post_liked_by"
     @ManyToMany
-    @JoinTable(
-            name = "post_likes",
-            joinColumns = @JoinColumn(name = "post_id"),
-            inverseJoinColumns = @JoinColumn(name = "user_id")
-    )
     @JsonIgnore
-    private Set<User> likedBy = new HashSet<>();
+    private List<User> likedBy = new ArrayList<>();
 
     @JsonIgnore
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -81,14 +78,5 @@ public class Post {
         return comments == null ? null : new ArrayList<>(comments);
     }
 //    @JsonIgnore
-
-    public void setComments(List<Comment> comments) {
-//        if (comments == null) {
-//            this.comments = null;
-//        } else {
-//            this.comments = Collections.unmodifiableList(comments);
-//        }
-        this.comments = comments;
-    }
 
 }

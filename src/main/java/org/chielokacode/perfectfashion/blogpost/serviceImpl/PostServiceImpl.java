@@ -7,6 +7,7 @@ import org.chielokacode.perfectfashion.blogpost.config.payload.PostRequest;
 import org.chielokacode.perfectfashion.blogpost.config.payload.PostResponse;
 import org.chielokacode.perfectfashion.blogpost.dto.PostLikesDto;
 import org.chielokacode.perfectfashion.blogpost.enums.Role;
+import org.chielokacode.perfectfashion.blogpost.exception.PostNotFoundException;
 import org.chielokacode.perfectfashion.blogpost.exception.ResourceNotFoundException;
 import org.chielokacode.perfectfashion.blogpost.exception.UnauthorizedException;
 import org.chielokacode.perfectfashion.blogpost.model.Post;
@@ -162,19 +163,21 @@ public class PostServiceImpl {
     and the likePost method now checks for existing likes using the contains method
     on the likedBy set. This approach ensures that each user can only like a post once.
      */
-    public void likePost(Long postId, User currentUser){
-        // Retrieve the post by ID, throw a ResourceNotFoundException if not found
+    public void likePost(Long postId, User user) throws PostNotFoundException {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new ResourceNotFoundException(POST, ID, postId));
-
-        // Check if the user has already liked the post
-        if (!post.getLikedBy().contains(currentUser)) {
-            post.getLikedBy().add(currentUser);
-            post.setLikes(post.getLikes() + 1);
-
-            // Save the updated post to the repository
-            postRepository.saveAndFlush(post);
+                .orElseThrow(PostNotFoundException::new);
+        boolean liked = false;
+        for (User user1 : post.getLikedBy()) {
+            if (user1.getUsername().equals(user.getUsername())) {
+                liked = true;
+                break;
+            }
         }
+        if (!liked) {
+            post.getLikedBy().add(user);
+            post.setLikes(post.getLikes() + 1);
+        }
+        postRepository.saveAndFlush(post);
     }
 
 
@@ -184,35 +187,33 @@ This unlikePost method complements the likePost method,
  allowing users to toggle their like status for a post.
  It checks if the user has already liked the post, and if so, it removes the like.
  */
-    public void unLikePost(Long postId,User currentUser){
-        // Retrieve the post by ID, throw a ResourceNotFoundException if not found
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new ResourceNotFoundException(POST, ID, postId));
-
-        // Check if the user has liked the post
-        if (post.getLikedBy().contains(currentUser)) {
-            post.getLikedBy().remove(currentUser);
+public void unlikePost(Long postId, User user) throws PostNotFoundException {
+    Post post = postRepository.findById(postId)
+            .orElseThrow(PostNotFoundException::new);
+    for (User user1 : post.getLikedBy()) {
+        if (user1.getUsername().equals(user.getUsername())) {
+            post.getLikedBy().remove(user1);
             post.setLikes(post.getLikes() - 1);
-
-            // Save the updated post to the repository
-            postRepository.saveAndFlush(post);
+            break;
         }
     }
+    postRepository.saveAndFlush(post);
+}
 
 
-    public PostLikesDto getLikes(Long postId, User currentUser){
-        // Retrieve the post by ID, throw a ResourceNotFoundException if not found
+
+    public PostLikesDto getLikes(Long postId, User user) throws PostNotFoundException {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new ResourceNotFoundException(POST, ID, postId));
-
-        // Create a PostLikesDto with the total number of likes
-        PostLikesDto postLikesDto = PostLikesDto.builder()
-                .likes(post.getLikes())
-                .build();
-
-        // Initialize liked status as false
-        postLikesDto.setLiked(post.getLikedBy().contains(currentUser));
-
+                .orElseThrow(PostNotFoundException::new);
+        PostLikesDto postLikesDto = PostLikesDto
+                .builder()
+                .likes(post.getLikes()).build();
+        postLikesDto.setLiked(false);
+        for (User user1 : post.getLikedBy()) {
+            if (user1.getUsername().equals(user.getUsername())) {
+                postLikesDto.setLiked(true);
+            }
+        }
         return postLikesDto;
     }
 

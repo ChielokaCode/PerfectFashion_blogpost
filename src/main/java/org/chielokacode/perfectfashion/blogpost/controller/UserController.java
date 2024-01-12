@@ -8,7 +8,6 @@ import org.apache.coyote.BadRequestException;
 import org.chielokacode.perfectfashion.blogpost.dto.LoginRequestDto;
 import org.chielokacode.perfectfashion.blogpost.dto.UserDto;
 import org.chielokacode.perfectfashion.blogpost.model.User;
-import org.chielokacode.perfectfashion.blogpost.serviceImpl.LogOutServiceImpl;
 import org.chielokacode.perfectfashion.blogpost.serviceImpl.UserServiceImpl;
 import org.chielokacode.perfectfashion.blogpost.utils.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,9 +23,9 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api")
 public class UserController {
 
-    private UserServiceImpl userService;
-    private PasswordEncoder passwordEncoder;
-    private JwtUtils jwtUtils;
+    private final UserServiceImpl userService;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtUtils jwtUtils;
 
     @Autowired
     public UserController(@Lazy UserServiceImpl userService,PasswordEncoder passwordEncoder, JwtUtils jwtUtils) {
