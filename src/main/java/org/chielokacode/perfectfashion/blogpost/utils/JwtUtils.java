@@ -5,6 +5,7 @@ import com.google.common.base.Objects;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
@@ -24,6 +25,8 @@ import java.util.function.Supplier;
 @Slf4j
 public class JwtUtils {
 
+    @Value("${SHA_KEY}")
+    private String SHA_KEY;
 
 /*
     //1st- For Creating JWT (GetKey, ExpirationDate)
@@ -33,13 +36,13 @@ public class JwtUtils {
 
     //1st- For Creating JWT (GetKey, ExpirationDate)
 
-    private Supplier<SecretKeySpec> getKey = () -> {
-        Key key = Keys.hmacShaKeyFor("5627dcc7bb45a7cf9ddd211168fb727a2005338c5fe1e29faa71fc542bcd59e1bf0c604d65578ba9001984bfa0f25e29a509f130db33c51916bf0ebfbb78b645"
+    private final Supplier<SecretKeySpec> getKey = () -> {
+        Key key = Keys.hmacShaKeyFor(SHA_KEY
                 .getBytes(StandardCharsets.UTF_8));
         return new SecretKeySpec(key.getEncoded(), key.getAlgorithm());
     };
 
-    private Supplier<Date> expirationTime = () ->
+    private final Supplier<Date> expirationTime = () ->
             Date.from(LocalDateTime.now()
                     .plusMinutes(10)
                     .atZone(ZoneId.systemDefault())

@@ -31,8 +31,8 @@ import static org.chielokacode.perfectfashion.blogpost.utils.AppConstants.*;
 @Service
 public class PostServiceImpl {
 
-    private PostRepository postRepository;
-    private UserRepository userRepository;
+    private final PostRepository postRepository;
+    private final UserRepository userRepository;
 
     @Autowired
     public PostServiceImpl(PostRepository postRepository, UserRepository userRepository) {
@@ -45,7 +45,7 @@ public class PostServiceImpl {
     public PostResponse savePost(Post newPost, User currentUser) throws BadRequestException {
         //check user is present
         User user = userRepository.findById(currentUser.getId())
-                .orElseThrow(() -> new ResourceNotFoundException(USER, ID, 1L));
+                .orElseThrow(() -> new ResourceNotFoundException("User with " + currentUser.getId() + " doesn't exist"));
 
         //checks if current User is an Admin to be able to Post
         //if not, throw exception
@@ -114,7 +114,7 @@ public class PostServiceImpl {
     //Method to delete Post by id by the Admin
     public ApiResponse deletePostById(Long postId, User currentUser) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new ResourceNotFoundException(POST, ID, postId));
+                .orElseThrow(() -> new ResourceNotFoundException("Post not found"));
 
         if (post.getUser().getUserRole().equals(currentUser.getUserRole()) ||
                 currentUser.getAuthorities().contains(new SimpleGrantedAuthority(Role.ROLE_ADMIN.toString()))) {
@@ -122,18 +122,16 @@ public class PostServiceImpl {
             postRepository.deleteById(postId);
             return new ApiResponse(Boolean.TRUE, "You successfully deleted post");
         }
-
-        ApiResponse apiResponse = new ApiResponse(Boolean.FALSE, "Sorry, You don't have Permission to delete Post");
-        throw new UnauthorizedException(apiResponse);
+        throw new UnauthorizedException("Sorry, You don't have Permission to delete Post");
 
     }
 
 //Method to edit/Update Post by id by the Admin
     public PostResponse editPostById(Long postId, PostRequest postToBeEdited, User currentUser) throws BadRequestException {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new ResourceNotFoundException(POST, ID, postId));
+                .orElseThrow(() -> new ResourceNotFoundException("Post not found"));
         User user = userRepository.findById(currentUser.getId())
-                .orElseThrow(() -> new ResourceNotFoundException(USER, ID, 1L));
+                .orElseThrow(() -> new ResourceNotFoundException("User not Found"));
 
         if (user.getUserRole().equals(Role.ROLE_ADMIN)) {
             post.setTitle(postToBeEdited.getTitle());
@@ -165,7 +163,7 @@ public class PostServiceImpl {
      */
     public void likePost(Long postId, User user) throws PostNotFoundException {
         Post post = postRepository.findById(postId)
-                .orElseThrow(PostNotFoundException::new);
+                .orElseThrow(() -> new PostNotFoundException("Post don't Exist"));
         boolean liked = false;
         for (User user1 : post.getLikedBy()) {
             if (user1.getUsername().equals(user.getUsername())) {
@@ -189,7 +187,7 @@ This unlikePost method complements the likePost method,
  */
 public void unlikePost(Long postId, User user) throws PostNotFoundException {
     Post post = postRepository.findById(postId)
-            .orElseThrow(PostNotFoundException::new);
+            .orElseThrow(() -> new PostNotFoundException("Post don't Exist"));
     for (User user1 : post.getLikedBy()) {
         if (user1.getUsername().equals(user.getUsername())) {
             post.getLikedBy().remove(user1);
@@ -204,7 +202,7 @@ public void unlikePost(Long postId, User user) throws PostNotFoundException {
 
     public PostLikesDto getLikes(Long postId, User user) throws PostNotFoundException {
         Post post = postRepository.findById(postId)
-                .orElseThrow(PostNotFoundException::new);
+                .orElseThrow(() -> new PostNotFoundException("Post don't Exist"));
         PostLikesDto postLikesDto = PostLikesDto
                 .builder()
                 .likes(post.getLikes()).build();

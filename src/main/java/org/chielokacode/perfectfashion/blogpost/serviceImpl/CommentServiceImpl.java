@@ -44,9 +44,9 @@ public class CommentServiceImpl {
     private static final String COMMENT_DOES_NOT_BELONG_TO_POST = "Comment does not belong to post";
 
 
-    private CommentRepository commentRepository;
-    private PostRepository postRepository;
-    private UserRepository userRepository;
+    private final CommentRepository commentRepository;
+    private final PostRepository postRepository;
+    private final UserRepository userRepository;
 
     @Autowired
     public CommentServiceImpl(CommentRepository commentRepository, PostRepository postRepository, UserRepository userRepository) {
@@ -61,7 +61,7 @@ public class CommentServiceImpl {
     //Method to create comment by the current user to a post posted by the admin
     public Comment createCommentByPostId(Long postId, User currentUser, Comment newComment) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new ResourceNotFoundException(POST_STR, ID_STR, postId));
+                .orElseThrow(() -> new ResourceNotFoundException("Post with " + postId + " doesn't exist"));
 
         User user = userRepository.getUser(currentUser);
         Comment comment = new Comment(newComment.getContent());
@@ -80,7 +80,7 @@ public class CommentServiceImpl {
 //        Post post = postRepository.findById(postId)
 //                .orElseThrow(() -> new ResourceNotFoundException(POST_STR, ID_STR, postId));
         Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new ResourceNotFoundException(COMMENT_STR, ID_STR, commentId));
+                .orElseThrow(() -> new ResourceNotFoundException("Comment with " + commentId + " doesn't exist"));
 
 //        if (!comment.getPost().getId().equals(post.getId())) {
 //            throw new BlogApiException(HttpStatus.BAD_REQUEST, COMMENT_DOES_NOT_BELONG_TO_POST);
@@ -133,9 +133,9 @@ public class CommentServiceImpl {
     //Method to get a Comment associated to a Post
      public Comment getComment(Long postId, Long commentId) {
          Post post = postRepository.findById(postId)
-                 .orElseThrow(() -> new ResourceNotFoundException(POST_STR, ID_STR, postId));
+                 .orElseThrow(() -> new ResourceNotFoundException("Post with " + postId + " doesn't exist"));
          Comment comment = commentRepository.findById(commentId)
-                 .orElseThrow(() -> new ResourceNotFoundException(COMMENT_STR, ID_STR, commentId));
+                 .orElseThrow(() -> new ResourceNotFoundException("Comment with " + commentId + " doesn't exist"));
          /*
          It checks if the retrieved comment belongs to the specified post by comparing the IDs of the post
          associated with the comment and the provided post (postId). If they match, it returns the comment.
@@ -157,9 +157,9 @@ public class CommentServiceImpl {
 
         //check that post and comment is present
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new ResourceNotFoundException(POST_STR, ID_STR, postId));
+                .orElseThrow(() -> new ResourceNotFoundException("Post with " + postId + " doesn't exist"));
         Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new ResourceNotFoundException(COMMENT_STR, ID_STR, commentId));
+                .orElseThrow(() -> new ResourceNotFoundException("Comment with " + commentId + " doesn't exist"));
 
         if (!comment.getPost().getId().equals(post.getId())) {
             return new ApiResponse(Boolean.FALSE, COMMENT_DOES_NOT_BELONG_TO_POST);
@@ -224,7 +224,7 @@ public class CommentServiceImpl {
      */
     public void likeComment(Long commentId, User user) throws CommentNotFoundException {
         Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(CommentNotFoundException::new);
+                .orElseThrow(() -> new CommentNotFoundException("Comment with " + commentId + " doesn't exist"));
         boolean liked = false;
         for (User user1 : comment.getLikedBy()) {
             if (user1.getUsername().equals(user.getUsername())) {
@@ -248,7 +248,7 @@ public class CommentServiceImpl {
      */
     public void unlikeComment(Long commentId, User user) throws CommentNotFoundException {
         Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(CommentNotFoundException::new);
+                .orElseThrow(() -> new CommentNotFoundException("Comment with " + commentId + " doesn't exist"));
         for (User user1 : comment.getLikedBy()) {
             if (user1.getUsername().equals(user.getUsername())) {
                 comment.getLikedBy().remove(user1);
@@ -261,7 +261,7 @@ public class CommentServiceImpl {
 
     public CommentLikesDto getLikes(Long commentId, User user) throws CommentNotFoundException {
         Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(CommentNotFoundException::new);
+                .orElseThrow(() -> new CommentNotFoundException("Comment with " + commentId + " doesn't exist"));
         CommentLikesDto commentLikesDto = CommentLikesDto
                 .builder()
                 .likes(comment.getLikes()).build();
